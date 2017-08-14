@@ -37,7 +37,7 @@ def main():
         for header in response.headers:
             print(header + ':', response.headers[header])
 
-        # gathering a list of hrefs and srcs
+        # gathering a list of href's and src's
         for script in soup.select('script'):
             links.append(script.get('src'))
         for anchor in soup.select('a'):
