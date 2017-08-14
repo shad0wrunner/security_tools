@@ -1,16 +1,13 @@
 import argparse
-import sys
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
-
-
+import requests
 
 
 def main():
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
-
     TODO: urljoin
     """
     links = []
@@ -63,7 +60,7 @@ def main():
     except Exception as e:
         print("[-] Something went wrong: %s" % e)
 
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         print("[x] Exiting by user command")
 
     print("\n[+] %d Links extracted:" % len(links))
