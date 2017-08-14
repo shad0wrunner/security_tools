@@ -11,7 +11,7 @@ def main():
     TODO: urljoin
     """
     links = []
-    parser = argparse.ArgumentParser(description='Parser parser')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--method', action='store', help='What method to use in request')
     parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
 
