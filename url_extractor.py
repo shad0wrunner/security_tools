@@ -1,5 +1,5 @@
 import argparse
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from bs4 import BeautifulSoup
 import requests
@@ -21,6 +21,7 @@ def main():
         args = parser.parse_args()
         url = args.url
         scheme = urlparse(url).scheme
+        host = urlparse(url).netloc
         method = args.method
 
         # checking for the supported methods
@@ -47,7 +48,6 @@ def main():
         anchor_elements = [element['href'] for element in parsed_html.select('a[href]')]
         link_elements = [element['href'] for element in parsed_html.select('link[href]')]
         form_elements = [element['action'] for element in parsed_html.select('form[action]')]
-
         links = script_elements + anchor_elements + link_elements + form_elements
 
         # removing bookmarks, emails, skype and '/'
@@ -56,11 +56,7 @@ def main():
                  not urlparse(link).scheme in ['mailto', 'skype'] and
                  not link == '/']
 
-        # appending URL value based on the link presentation
-        links = [scheme + '://' + link[2:] if link[0:2] == '//' else
-                 link if urlparse(link).scheme in ['http', 'https'] else
-                 url + link if link[0] == '/' else
-                 url + '/' + link for link in links]
+        links = [urljoin(url, link) for link in links] # gathering links together
 
     except Exception as e:
         print("[-] Something went wrong: %s" % e)
