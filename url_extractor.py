@@ -3,6 +3,7 @@ from urllib.parse import urlparse, urljoin
 
 from bs4 import BeautifulSoup
 import requests
+import seleniumrequests
 
 
 def main():
@@ -15,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--method', action='store', help='What method to use in request')
     parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
+    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver')
 
     try:
         # Defining and splitting variables from the incoming url
@@ -28,10 +30,16 @@ def main():
 
         # requesting the url
         requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
-        response = requests.request(method, url, verify=False)  # get the response
-        url = response.url.rstrip('/')  # if there was a redirect - acquire the URL from the response
+        if args.w:
+            print('[+] Starting up a webdriver')
+            driver = seleniumrequests.Chrome('chromedriver.exe')
+            print('[+] Retrieving ' + url)
+            response = driver.request(method, url, verify=False)  # get the response
+        else:
+            print('[+] Retrieving ' + url)
+            response = requests.request(method, url, verify=False)  # get the response
 
-        print('[+] Retrieving ' + url)
+        url = response.url.rstrip('/')  # if there was a redirect - acquire the URL from the response
 
         # neat print headers
         print("[+] Received the response HTTP %d" % response.status_code)
