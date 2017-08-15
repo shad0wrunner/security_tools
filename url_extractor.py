@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import requests
 
-
 def main():
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
@@ -29,6 +28,7 @@ def main():
             raise ValueError("Method %s is not supported." % method)
 
         # requesting the url
+        requests.packages.urllib3.disable_warnings()  # supressing unsafe HTTPS warnings
         response = requests.request(method, url, verify=False)  # get the response
         url = response.url.rstrip('/')  # if there was a redirect - acquire the URL from the response
 
