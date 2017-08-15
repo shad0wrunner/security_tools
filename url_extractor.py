@@ -4,6 +4,7 @@ from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 import requests
 
+
 def main():
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
