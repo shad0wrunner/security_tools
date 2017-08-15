@@ -7,7 +7,6 @@ import requests
 def main():
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
-    TODO: urljoin
     """
 
     # Retrieving parameters
@@ -27,18 +26,19 @@ def main():
             raise ValueError("Method %s is not supported." % method)
 
         # requesting the url
-        requests.packages.urllib3.disable_warnings()  # supressing unsafe HTTPS warnings
+        requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
         response = requests.request(method, url, verify=False)  # get the response
         url = response.url.rstrip('/')  # if there was a redirect - acquire the URL from the response
 
         print('[+] Retrieving ' + url)
-        raw_html = response.content
-        parsed_html = BeautifulSoup(raw_html, "html.parser")
 
         # neat print headers
         print("[+] Received the response HTTP %d" % response.status_code)
         for header in response.headers:
             print(header + ':', response.headers[header])
+
+        raw_html = response.content
+        parsed_html = BeautifulSoup(raw_html, "html.parser")
 
         # gathering a list of links from specific elements
         script_elements = [element['src'] for element in parsed_html.select('script[src]')]
@@ -53,7 +53,7 @@ def main():
                  not link[0] == '#' and
                  not urlparse(link).scheme in ['mailto', 'skype', 'tel'] and
                  not link == '/']
-        links = [urljoin(url, link) for link in links] # gathering links together
+        links = [urljoin(url, link) for link in links]  # gathering links together
 
     except Exception as e:
         print("[-] Something went wrong: %s" % e)
@@ -62,7 +62,7 @@ def main():
         print("[x] Exiting by user command")
 
     # final links count and listing
-    print("\n[+] %d unique links extracted (%d duplicates removed):" % (len(set(links)), len(links)-len(set(links))))
+    print("[+] %d unique links extracted (%d duplicates removed):" % (len(set(links)), len(links) - len(set(links))))
     for link in set(links):
         print(link)
     return links
