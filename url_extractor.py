@@ -14,9 +14,9 @@ def main():
     # Retrieving parameters
     links = []
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--method', action='store', help='What method to use in request')
+    parser.add_argument('-m', '--method', action='store', help='What method to use in request', default='GET')
     parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
-    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver')
+    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver', default=False)
 
     try:
         # Defining and splitting variables from the incoming url
@@ -30,7 +30,8 @@ def main():
 
         # requesting the url
         requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
-        if args.w:
+
+        if args.w: # if the -w switch is present - switch to webdriver instead of requests module
             print('[+] Starting up a webdriver')
             driver = seleniumrequests.Chrome('chromedriver.exe')
             print('[+] Retrieving ' + url)
@@ -56,7 +57,7 @@ def main():
         form_elements = [element['action'] for element in parsed_html.select('form[action]')]
         links = script_elements + anchor_elements + link_elements + form_elements
 
-        # removing bookmarks, emails, skype and '/'
+        # removing bookmarks, non-interesting schemes and '/'
         print('[+] Tidying up the links')
         links = [link for link in links if
                  not link[0] == '#' and
