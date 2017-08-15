@@ -28,10 +28,9 @@ def main():
         if not method.upper() in ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE']:
             raise ValueError("Method %s is not supported." % method)
 
-        # requesting the url
         requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
 
-        if args.w: # if the -w switch is present - switch to webdriver instead of requests module
+        if args.w:  # if the -w switch is present - switch to webdriver instead of requests module
             print('[+] Starting up a webdriver')
             driver = seleniumrequests.Chrome('chromedriver.exe')
             print('[+] Retrieving ' + url)
@@ -47,6 +46,7 @@ def main():
         for header in response.headers:
             print(header + ':', response.headers[header])
 
+        # assigning HTML contents
         raw_html = response.content
         parsed_html = BeautifulSoup(raw_html, "html.parser")
 
@@ -58,11 +58,8 @@ def main():
         links = script_elements + anchor_elements + link_elements + form_elements
 
         # removing bookmarks, non-interesting schemes and '/'
-        print('[+] Tidying up the links')
-        links = [link for link in links if
-                 not link[0] == '#' and
-                 not urlparse(link).scheme in ['mailto', 'skype', 'tel'] and
-                 not link == '/']
+        print('\n[+] Tidying up the links')
+        links = [link for link in links if not urlparse(link).scheme in ['mailto', 'skype', 'tel']]
         links = [urljoin(url, link) for link in links]  # gathering links together
 
     except Exception as e:
@@ -72,11 +69,13 @@ def main():
         print("[x] Exiting by user command")
 
     # final links count and listing
-    print("[+] %d unique links extracted (%d duplicates removed):" % (len(set(links)), len(links) - len(set(links))))
-    for link in set(links):
+    unique_links = set(links)
+    for link in unique_links:
         print(link)
-    return links
+    print("[+] Total %d unique links extracted (%d duplicates removed)" %
+          (len(unique_links), len(links) - len(unique_links)))
+    return unique_links
 
 if __name__ == "__main__":
-    print('[*] Starting the main module')
+    print('[+] Starting the main module')
     main()
