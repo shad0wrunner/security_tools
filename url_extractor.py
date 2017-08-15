@@ -20,8 +20,6 @@ def main():
         # Defining and splitting variables from the incoming url
         args = parser.parse_args()
         url = args.url
-        scheme = urlparse(url).scheme
-        host = urlparse(url).netloc
         method = args.method
 
         # checking for the supported methods
@@ -43,7 +41,6 @@ def main():
             print(header + ':', response.headers[header])
 
         # gathering a list of links from specific elements
-
         script_elements = [element['src'] for element in parsed_html.select('script[src]')]
         anchor_elements = [element['href'] for element in parsed_html.select('a[href]')]
         link_elements = [element['href'] for element in parsed_html.select('link[href]')]
@@ -51,11 +48,11 @@ def main():
         links = script_elements + anchor_elements + link_elements + form_elements
 
         # removing bookmarks, emails, skype and '/'
+        print('[+] Tidying up the links')
         links = [link for link in links if
                  not link[0] == '#' and
                  not urlparse(link).scheme in ['mailto', 'skype'] and
                  not link == '/']
-
         links = [urljoin(url, link) for link in links] # gathering links together
 
     except Exception as e:
