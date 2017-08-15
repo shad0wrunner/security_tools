@@ -51,7 +51,7 @@ def main():
         print('[+] Tidying up the links')
         links = [link for link in links if
                  not link[0] == '#' and
-                 not urlparse(link).scheme in ['mailto', 'skype'] and
+                 not urlparse(link).scheme in ['mailto', 'skype', 'tel'] and
                  not link == '/']
         links = [urljoin(url, link) for link in links] # gathering links together
 
