@@ -42,14 +42,13 @@ def main():
             print(header + ':', response.headers[header])
 
         # gathering a list of links from specific elements
-        for script in parsed_html.select('script'):
-            links.append(script.get('src'))
-        for anchor in parsed_html.select('a'):
-            links.append(anchor.get('href'))
-        for link in parsed_html.select('link'):
-            links.append(link.get('href'))
-        for form in parsed_html.select('form'):
-            links.append(form.get('action'))
+
+        script_elements = [element['src'] for element in parsed_html.select('script[src]')]
+        anchor_elements = [element['href'] for element in parsed_html.select('a[href]')]
+        link_elements = [element['href'] for element in parsed_html.select('link[href]')]
+        form_elements = [element['action'] for element in parsed_html.select('form[action]')]
+
+        links = script_elements + anchor_elements + link_elements + form_elements
 
         # removing bookmarks, emails, skype and '/'
         links = [link for link in links if
