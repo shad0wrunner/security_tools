@@ -62,8 +62,8 @@ def main():
         print("[x] Exiting by user command")
 
     # final links count and listing
-    print("\n[+] %d Links extracted:" % len(links))
-    for link in links:
+    print("\n[+] %d unique links extracted (%d duplicates removed):" % (len(set(links)), len(links)-len(set(links))))
+    for link in set(links):
         print(link)
     return links
 
