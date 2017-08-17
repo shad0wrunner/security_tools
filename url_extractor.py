@@ -12,11 +12,11 @@ def main():
     """
 
     # Retrieving parameters
-    links = []
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--method', action='store', help='What method to use in request', default='GET')
     parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
     parser.add_argument('-w', action='store_true', help='Use Chrome webdriver', default=False)
+    parser.add_argument('-f', '--file', action='store', help='File for the links')
 
     try:
         # Defining and splitting variables from the incoming url
@@ -55,12 +55,29 @@ def main():
         anchor_elements = [element['href'] for element in parsed_html.select('a[href]')]
         link_elements = [element['href'] for element in parsed_html.select('link[href]')]
         form_elements = [element['action'] for element in parsed_html.select('form[action]')]
-        links = script_elements + anchor_elements + link_elements + form_elements
+        iframe_elements = [element['src'] for element in parsed_html.select('iframe[src]')]
+        links = script_elements + anchor_elements + link_elements + form_elements + iframe_elements
 
         # removing bookmarks, non-interesting schemes and '/'
         print('\n[+] Tidying up the links')
         links = [link for link in links if not urlparse(link).scheme in ['mailto', 'skype', 'tel']]
         links = [urljoin(url, link) for link in links]  # gathering links together
+
+        # final links count and listing
+        unique_links = set(links)
+
+        if args.file is not None:
+            file = open(args.file, "w")
+            file.write('Links on '+url+':')
+            print('[+] Writing links into the file')
+            for link in unique_links:
+                file.write('\n'+link)
+        else:
+            for link in unique_links:
+                print(link)
+
+        print("[+] Total %d unique links extracted (%d duplicates removed)" %
+              (len(unique_links), len(links) - len(unique_links)))
 
     except Exception as e:
         print("[-] Something went wrong: %s" % e)
@@ -68,13 +85,6 @@ def main():
     except KeyboardInterrupt:
         print("[x] Exiting by user command")
 
-    # final links count and listing
-    unique_links = set(links)
-    for link in unique_links:
-        print(link)
-    print("[+] Total %d unique links extracted (%d duplicates removed)" %
-          (len(unique_links), len(links) - len(unique_links)))
-    return unique_links
 
 if __name__ == "__main__":
     print('[+] Starting the main module')
