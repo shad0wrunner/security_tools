@@ -6,33 +6,21 @@ import requests
 import seleniumrequests
 
 
-def main():
+def main(method, url, webdriver, input_file):
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
     """
-
-    # Retrieving parameters
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--method', action='store', help='What method to use in request', default='GET')
-    parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
-    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver', default=False)
-    parser.add_argument('-f', '--file', action='store', help='File for the links')
-
     try:
-        # Defining and splitting variables from the incoming url
-        args = parser.parse_args()
-        url = args.url
-        method = args.method
-
         # checking for the supported methods
         if not method.upper() in ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE']:
             raise ValueError("Method %s is not supported." % method)
 
         requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
 
-        if args.w:  # if the -w switch is present - switch to webdriver instead of requests module
+        if webdriver:  # if the -w switch is present - switch to webdriver instead of requests module
             print('[+] Starting up a webdriver')
             driver = seleniumrequests.Chrome('chromedriver.exe')
+
             print('[+] Retrieving ' + url)
             response = driver.request(method, url, verify=False)  # get the response
         else:
@@ -66,12 +54,13 @@ def main():
         # final links count and listing
         unique_links = set(links)
 
-        if args.file is not None:
-            file = open(args.file, "w")
+        if input_file is not None:
+            file = open(input_file, "w")
             file.write('Links on '+url+':')
             print('[+] Writing links into the file')
             for link in unique_links:
                 file.write('\n'+link)
+            file.close()
         else:
             for link in unique_links:
                 print(link)
@@ -88,4 +77,14 @@ def main():
 
 if __name__ == "__main__":
     print('[+] Starting the main module')
-    main()
+
+    # Retrieving parameters
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--method', action='store', help='What method to use in request', default='GET')
+    parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
+    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver', default=False)
+    parser.add_argument('-f', '--file', action='store', help='File for the links')
+    args = parser.parse_args()
+
+    # Passing parameters
+    main(args.method, args.url, args.w, args.file)
