@@ -1,5 +1,9 @@
 import argparse
 
+import asyncio
+from async_dns import types
+from async_dns.resolver import ProxyResolver
+
 import itertools
 import string
 import requests
@@ -38,7 +42,7 @@ def main():
         method = args.method
         schema, domain = args.schema, args.domain
         subdomain_length = args.length
-        failed_urls, working_urls = [], []
+        failed_urls, suspicious_urls, working_urls = [], [], []
 
         # specifies how often should the progress be updated [1-100]. 20 - around each 5% of requests.
         progress_freq = 20
@@ -52,22 +56,36 @@ def main():
         requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
 
         print('[+] Generating a list of possible subdomains')
-        url_list = [schema+'://'+''.join(permutation)+'.'+domain for permutation in
+        host_list = [''.join(permutation)+'.'+domain for permutation in
                     list(itertools.product(char_set, repeat=subdomain_length))]
 
-        print('[+] Brute-forcing subdomains. %d URLs in total' % len(url_list))
-        for url in url_list:
+        print('[+] Brute-forcing subdomains. %d URLs in total' % len(host_list))
+        loop = asyncio.get_event_loop()
+        resolver = ProxyResolver()
+        for host in host_list:
             try:
-                progress(url, url_list, progress_freq)
-                response = requests.request(method, url, verify=False, timeout=(3.05, 27.10))  # get the response
-                print(url,'looks alive')
-                working_urls.append((url, response.status_code))
+                progress(host, host_list, progress_freq)
+                dns_response = loop.run_until_complete(resolver.query(host, types.A))
+
+                if not dns_response.an == []:
+                    url = schema+'://'+host
+                    http_response = requests.request(method, url, verify=False)  # get the response
+                    print('%s answers HTTP %d' % (url, http_response.status_code))
+                    working_urls.append((url, http_response.status_code))
+                else:
+                    failed_urls.append(host)
             except requests.exceptions.ConnectionError:
-                failed_urls.append(url)
+                print('%s has been resolved but provided no HTTP response. Try HTTPS or assume it is firewalled' % url)
+                suspicious_urls.append(url)
+            except Exception as exception_message:
+                print('[-] Something went wrong: %s' % exception_message)
+
 
         print('[+] Brute-forcing complete. %d host(s) below seem operational:' % len(working_urls))
         print(working_urls)
-        print('Non-responding hosts: %d' % len(failed_urls))
+        print('[?] %d host(s) below might require additional inspections:' % len(suspicious_urls))
+        print(suspicious_urls)
+        print('[+] Non-responding hosts: %d' % len(failed_urls))
 
     except Exception as exception_message:
         print('[-] Something went wrong: %s' % exception_message)
