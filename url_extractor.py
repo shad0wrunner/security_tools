@@ -6,6 +6,17 @@ import requests
 import seleniumrequests
 
 
+def parse_parameters():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--method', action='store', help='What method to use in request', default='GET')
+    parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
+    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver', default=False)
+    parser.add_argument('-f', '--file', action='store', help='File for the links')
+
+    args = parser.parse_args()
+    parsed_args = (args.method, args.url, args.w, args.file)
+    return parsed_args
+
 def main(method, url, webdriver, input_file):
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
@@ -79,12 +90,7 @@ if __name__ == "__main__":
     print('[+] Starting the main module')
 
     # Retrieving parameters
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--method', action='store', help='What method to use in request', default='GET')
-    parser.add_argument('-u', '--url', action='store', help='URL to call with the specified method')
-    parser.add_argument('-w', action='store_true', help='Use Chrome webdriver', default=False)
-    parser.add_argument('-f', '--file', action='store', help='File for the links')
-    args = parser.parse_args()
+    parsed_parameters = parse_parameters()
 
     # Passing parameters
-    main(args.method, args.url, args.w, args.file)
+    main(*parsed_parameters)
