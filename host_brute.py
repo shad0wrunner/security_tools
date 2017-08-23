@@ -42,7 +42,7 @@ def main():
         char_set = string.ascii_lowercase + string.digits + '-' + '_'
 
         # checking for the supported methods
-        if not method.upper() in ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE']:
+        if not method.upper() in ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE', 'HEAD']:
             raise ValueError("Method %s is not supported." % method)
 
         print('[+] Starting a generator of possible subdomains')
