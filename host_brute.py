@@ -1,30 +1,18 @@
 import argparse
 
-import asyncio
-from async_dns import types
-from async_dns.resolver import ProxyResolver
-
+import dns.resolver
 import itertools
-import string
 import requests
+import string
+import timeit
 
 
-def get_all_subdomains():
-    pass
-
-
-def progress(current_element, elements_list, percentage):
-    """ calculates percentage of completion based on the index of the element in the list """
-    try:
-        divisor = len(elements_list) // percentage
-        current_position = elements_list.index(current_element)
-        if current_position % divisor == 0:
-            print('%d percent complete (%d out of %d)' % ((current_position * 100 / len(elements_list)),
-                                                          current_position,
-                                                          len(elements_list)))
-
-    except Exception as exception_message:
-        print('[-] Something went wrong in the progress meter: %s' % exception_message)
+def progress(current_position, total, percentage):
+    divisor = total // percentage
+    if current_position % divisor == 0:
+        print('%d percent complete (%d out of %d)' % ((current_position * 100 / total),
+                                                      current_position,
+                                                      total))
 
 
 def main():
@@ -42,10 +30,14 @@ def main():
         method = args.method
         schema, domain = args.schema, args.domain
         subdomain_length = args.length
-        failed_urls, suspicious_urls, working_urls = [], [], []
+        suspicious_urls, working_urls = [], []
+        failed_urls_count = 0
+        requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
+
+        dns_resolver = dns.resolver.Resolver()
 
         # specifies how often should the progress be updated [1-100]. 20 - around each 5% of requests.
-        progress_freq = 20
+        progress_freq = 50
 
         char_set = string.ascii_lowercase + string.digits + '-' + '_'
 
@@ -53,39 +45,42 @@ def main():
         if not method.upper() in ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE']:
             raise ValueError("Method %s is not supported." % method)
 
-        requests.packages.urllib3.disable_warnings()  # suppressing unsafe HTTPS warnings
+        print('[+] Starting a generator of possible subdomains')
+        start_time = timeit.default_timer()
+        host_generator = (''.join(permutation)+'.'+domain for permutation in
+                          itertools.product(char_set, repeat=subdomain_length))
+        total_hosts = len(char_set)**subdomain_length
 
-        print('[+] Generating a list of possible subdomains')
-        host_list = [''.join(permutation)+'.'+domain for permutation in
-                    list(itertools.product(char_set, repeat=subdomain_length))]
-
-        print('[+] Brute-forcing subdomains. %d URLs in total' % len(host_list))
-        loop = asyncio.get_event_loop()
-        resolver = ProxyResolver()
-        for host in host_list:
+        print('[+] Brute-forcing subdomains. %d URLs in total' % total_hosts)
+        for index, host in enumerate(host_generator):
             try:
-                progress(host, host_list, progress_freq)
-                dns_response = loop.run_until_complete(resolver.query(host, types.A))
+                progress(index, total_hosts, progress_freq)
+                dns_response = (dns_resolver.query(host, 'A', raise_on_no_answer=False))
+                resolved_host = dns_response.qname.to_text(omit_final_dot=True)
 
-                if not dns_response.an == []:
-                    url = schema+'://'+host
-                    http_response = requests.request(method, url, verify=False)  # get the response
-                    print('%s answers HTTP %d' % (url, http_response.status_code))
-                    working_urls.append((url, http_response.status_code))
-                else:
-                    failed_urls.append(host)
+                url = schema+'://'+resolved_host
+                http_response = requests.request(method, url, verify=False, timeout=(3, 3))  # get the response
+                print('%s answers HTTP %d' % (url, http_response.status_code))
+                working_urls.append((url, http_response.status_code))
+
             except requests.exceptions.ConnectionError:
                 print('%s has been resolved but provided no HTTP response. Try HTTPS or assume it is firewalled' % url)
                 suspicious_urls.append(url)
+
+            except dns.resolver.NXDOMAIN:
+                failed_urls_count += 1
+
             except Exception as exception_message:
-                print('[-] Something went wrong: %s' % exception_message)
+                print('[-] Something went wrong while brute-forcing hosts: %s while trying %s' %
+                      (exception_message, host))
 
-
-        print('[+] Brute-forcing complete. %d host(s) below seem operational:' % len(working_urls))
+        stop_time = timeit.default_timer()
+        print('[+] Brute-forcing complete in %d sec. %d host(s) below seem operational:' %
+              (stop_time-start_time, len(working_urls)))
         print(working_urls)
-        print('[?] %d host(s) below might require additional inspections:' % len(suspicious_urls))
+        print('[?] %d host(s) below might require additional inspection:' % len(suspicious_urls))
         print(suspicious_urls)
-        print('[+] Non-responding hosts: %d' % len(failed_urls))
+        print('[+] Not resolved hosts: %d' % failed_urls_count)
 
     except Exception as exception_message:
         print('[-] Something went wrong: %s' % exception_message)

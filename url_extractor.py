@@ -17,6 +17,7 @@ def parse_parameters():
     parsed_args = (args.method, args.url, args.w, args.file)
     return parsed_args
 
+
 def main(method, url, webdriver, input_file):
     """
     The tool is intended to extract all links (complete and relative ones) from HTML tag attributes
