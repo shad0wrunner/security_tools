@@ -29,7 +29,7 @@ def progress(current_position, total, resolution):
 
 def main(method, schema, domain, subdomain_length):
     """
-    brute-forces subdomains
+    brute-forces subdomains given the length of the subdomain name to generate
     """
     try:
         suspicious_urls, working_urls = [], []
