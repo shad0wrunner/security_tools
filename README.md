@@ -1,3 +1,6 @@
+!This is to confirm the authoring of the tools for EC Council ECE points
+//Pavel Kann
+
 # SecTools
 Various assistance tools
 
